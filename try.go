@@ -16,6 +16,8 @@ type Func func(attempt int) (retry bool, err error)
 
 // Do keeps trying the function until the second argument
 // returns false, or no error is returned.
+// waiting for delay to elapse before retrying, and
+// exponent to factor delay after each retry
 func Do(delay, exponent time.Duration, fn Func) error {
 	var err error
 	var cont bool
