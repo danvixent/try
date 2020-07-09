@@ -7,7 +7,7 @@ import (
 )
 
 // MaxRetries is the maximum number of retries before bailing.
-var MaxRetries = 10
+var MaxRetries = 3
 
 var errMaxRetriesReached = errors.New("exceeded retry limit")
 
