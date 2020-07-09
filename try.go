@@ -1,6 +1,10 @@
 package try
 
-import "errors"
+import (
+	"errors"
+	"log"
+	"time"
+)
 
 // MaxRetries is the maximum number of retries before bailing.
 var MaxRetries = 10
@@ -12,7 +16,7 @@ type Func func(attempt int) (retry bool, err error)
 
 // Do keeps trying the function until the second argument
 // returns false, or no error is returned.
-func Do(fn Func) error {
+func Do(delay, exponent time.Duration, fn Func) error {
 	var err error
 	var cont bool
 	attempt := 1
@@ -25,6 +29,9 @@ func Do(fn Func) error {
 		if attempt > MaxRetries {
 			return errMaxRetriesReached
 		}
+		delay *= exponent
+		log.Printf("retrying after %v", delay)
+		time.Sleep(delay)
 	}
 	return err
 }

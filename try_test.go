@@ -5,20 +5,24 @@ import (
 	"fmt"
 	"log"
 	"testing"
+	"time"
 
 	"github.com/cheekybits/is"
-	"github.com/matryer/try"
+	"github.com/danvixent/try"
 )
+
+const delay = time.Microsecond * 2
+const exp = time.Duration(2)
 
 func TestTryExample(t *testing.T) {
 	try.MaxRetries = 20
 	SomeFunction := func() (string, error) {
 		return "", nil
 	}
-	var value string
-	err := try.Do(func(attempt int) (bool, error) {
+
+	err := try.Do(delay, exp, func(attempt int) (bool, error) {
 		var err error
-		value, err = SomeFunction()
+		_, err = SomeFunction()
 		return attempt < 5, err // try 5 times
 	})
 	if err != nil {
@@ -30,15 +34,15 @@ func TestTryExamplePanic(t *testing.T) {
 	SomeFunction := func() (string, error) {
 		panic("something went badly wrong")
 	}
-	var value string
-	err := try.Do(func(attempt int) (retry bool, err error) {
+
+	err := try.Do(delay, exp, func(attempt int) (retry bool, err error) {
 		retry = attempt < 5 // try 5 times
 		defer func() {
 			if r := recover(); r != nil {
 				err = errors.New(fmt.Sprintf("panic: %v", r))
 			}
 		}()
-		value, err = SomeFunction()
+		_, err = SomeFunction()
 		return
 	})
 	if err != nil {
@@ -49,7 +53,7 @@ func TestTryExamplePanic(t *testing.T) {
 func TestTryDoSuccessful(t *testing.T) {
 	is := is.New(t)
 	callCount := 0
-	err := try.Do(func(attempt int) (bool, error) {
+	err := try.Do(delay, exp, func(attempt int) (bool, error) {
 		callCount++
 		return attempt < 5, nil
 	})
@@ -61,7 +65,7 @@ func TestTryDoFailed(t *testing.T) {
 	is := is.New(t)
 	theErr := errors.New("something went wrong")
 	callCount := 0
-	err := try.Do(func(attempt int) (bool, error) {
+	err := try.Do(delay, exp, func(attempt int) (bool, error) {
 		callCount++
 		return attempt < 5, theErr
 	})
@@ -73,7 +77,7 @@ func TestTryPanics(t *testing.T) {
 	is := is.New(t)
 	theErr := errors.New("something went wrong")
 	callCount := 0
-	err := try.Do(func(attempt int) (retry bool, err error) {
+	err := try.Do(delay, exp, func(attempt int) (retry bool, err error) {
 		retry = attempt < 5
 		defer func() {
 			if r := recover(); r != nil {
@@ -93,7 +97,7 @@ func TestTryPanics(t *testing.T) {
 
 func TestRetryLimit(t *testing.T) {
 	is := is.New(t)
-	err := try.Do(func(attempt int) (bool, error) {
+	err := try.Do(delay, exp, func(attempt int) (bool, error) {
 		return true, errors.New("nope")
 	})
 	is.OK(err)
