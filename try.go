@@ -2,7 +2,9 @@ package try
 
 import (
 	"errors"
+	"fmt"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -29,7 +31,7 @@ func Do(delay, exponent time.Duration, fn Func) error {
 		}
 		attempt++
 		if attempt > MaxRetries {
-			return errMaxRetriesReached
+			return fmt.Errorf("%v: %v", err, errMaxRetriesReached)
 		}
 		delay *= exponent
 		log.Printf("retrying after %v", delay)
@@ -41,5 +43,5 @@ func Do(delay, exponent time.Duration, fn Func) error {
 // IsMaxRetries checks whether the error is due to hitting the
 // maximum number of retries or not.
 func IsMaxRetries(err error) bool {
-	return err == errMaxRetriesReached
+	return strings.Contains(err.Error(), errMaxRetriesReached.Error())
 }
